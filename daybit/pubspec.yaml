@@ -42,6 +42,11 @@ flutter:
   assets:
     - lib/features/loading/assets/vector/
     - lib/features/loading/assets/lottie/
+    - lib/features/loading/assets/images/
+    - lib/features/Auth/assets/images/
+    - lib/features/Auth/assets/images/loginin/
+    - lib/features/Auth/assets/vectors/
+    - lib/features/Auth/assets/vectors/login/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
