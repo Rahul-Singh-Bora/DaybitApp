@@ -1,5 +1,7 @@
 import 'package:daybit/core/config/app_images.dart';
 import 'package:daybit/core/config/app_vectors.dart';
+import 'package:daybit/shared/utils/app_navigation.dart';
+import 'package:daybit/features/onboarding/presentation/pages/onboarding_page1.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -108,7 +110,11 @@ class Screen1 extends StatelessWidget {
                 alignment: Alignment.centerRight,
                 child: GestureDetector(
                   onTap: () {
-                    // TODO: Navigate to next screen
+                    AppNavigation.pushWithSlideTransition(
+                      context,
+                      const OnboardingPage1(),
+                      direction: SlideDirection.right,
+                    );
                   },
                   child: Container(
                     padding: const EdgeInsets.symmetric(
