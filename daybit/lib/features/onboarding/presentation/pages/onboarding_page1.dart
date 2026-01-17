@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:daybit/shared/widgets/arrow_button.dart';
-import '../widgets/onboarding_option_widget.dart';
+import '../widgets/onboarding_content.dart';
 import '../widgets/progress_bar_widget.dart';
+import 'building_plan.dart';
 
 class OnboardingPage1 extends StatefulWidget {
   const OnboardingPage1({super.key});
@@ -12,9 +12,8 @@ class OnboardingPage1 extends StatefulWidget {
 
 class _OnboardingPage1State extends State<OnboardingPage1> {
   final PageController _pageController = PageController();
-  int _currentStep = 0;
+  final ValueNotifier<int> _currentStepNotifier = ValueNotifier(0);
 
-  // Store selected index for each step. -1 indicates no selection.
   final List<int> _selectedOptions = [-1, -1, -1];
 
   final List<Map<String, dynamic>> _questions = [
@@ -33,7 +32,7 @@ class _OnboardingPage1State extends State<OnboardingPage1> {
     },
     {
       'questionTitle': 'Question 2',
-      'title': 'What do you want to improve right now?', // Keeping as per image
+      'title': 'What do you want to improve right now?',
       'subtitle': 'We’ll schedule them at the best time for you.',
       'options': [
         {'emoji': null, 'label': 'Morning'},
@@ -48,8 +47,7 @@ class _OnboardingPage1State extends State<OnboardingPage1> {
       'subtitle': 'Start easy or push yourself — your choice.',
       'options': [
         {
-          'emoji':
-              null, // Radio button style implies bullets maybe? But design shows just circle and text
+          'emoji': null,
           'label': 'Easy',
           'description': 'Small steps, low effort',
         },
@@ -66,20 +64,24 @@ class _OnboardingPage1State extends State<OnboardingPage1> {
   @override
   void dispose() {
     _pageController.dispose();
+    _currentStepNotifier.dispose();
     super.dispose();
   }
 
   void _handleNext() {
-    if (_selectedOptions[_currentStep] != -1) {
-      if (_currentStep < _questions.length - 1) {
+    final currentStep = _currentStepNotifier.value;
+    if (_selectedOptions[currentStep] != -1) {
+      if (currentStep < _questions.length - 1) {
         _pageController.nextPage(
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeInOut,
         );
       } else {
         // Final step completion logic
-        // TODO: Navigate to Home or next feature
-        print("Onboarding Completed: $_selectedOptions");
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const BuildingPlanPage()),
+        );
       }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -89,124 +91,160 @@ class _OnboardingPage1State extends State<OnboardingPage1> {
   }
 
   void _handleBack() {
-    if (_currentStep > 0) {
+    if (_currentStepNotifier.value > 0) {
       _pageController.previousPage(
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
       );
     } else {
-      Navigator.pop(context); // Go back to "Let's Start" page
+      Navigator.pop(context);
     }
   }
 
   void _onPageChanged(int index) {
-    setState(() {
-      _currentStep = index;
-    });
+    _currentStepNotifier.value = index;
+  }
+
+  Future<void> _handleOptionSelect(int stepIndex, int optionIndex) async {
+    if (_selectedOptions[stepIndex] != -1 &&
+        _selectedOptions[stepIndex] != optionIndex) {
+      // Shrink previous selection
+      setState(() {
+        _selectedOptions[stepIndex] = -1;
+      });
+      await Future.delayed(const Duration(milliseconds: 150));
+    }
+    // Grow new selection
+    if (mounted) {
+      setState(() {
+        _selectedOptions[stepIndex] = optionIndex;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    // 1. Calculate Responsive Scale Factor
+    final screenWidth = MediaQuery.of(context).size.width;
+    final scaleFactor = screenWidth / 400; // Base design width
+
+    // Responsive sizes for static elements
+    final horizontalPadding = (32 * scaleFactor).clamp(16.0, 48.0);
+    final topBarSpacing = (40 * scaleFactor).clamp(20.0, 60.0);
+    final questionTitleSize = (18 * scaleFactor).clamp(14.0, 24.0);
+    final progressTextSize = (16 * scaleFactor).clamp(12.0, 20.0);
+    final iconSize = (28 * scaleFactor).clamp(24.0, 36.0);
+
     return Scaffold(
       backgroundColor: const Color(0xFF272727),
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Top Navigation Bar (Back Arrow)
+            // Top Navigation Bar
             Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16.0,
-                vertical: 8.0,
+              padding: EdgeInsets.symmetric(
+                horizontal:
+                    horizontalPadding /
+                    2, // Slightly less padding for back button
+                vertical: 8.0 * scaleFactor,
               ),
               child: IconButton(
                 onPressed: () => Navigator.pop(context),
-                icon: const Icon(
+                icon: Icon(
                   Icons.arrow_back,
                   color: Colors.white,
-                  size: 28,
+                  size: iconSize,
                 ),
               ),
             ),
 
-            // Progress Indicator Section (Arrows + Bar)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 32.0),
-              child: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      IconButton(
-                        onPressed: _handleBack,
-                        icon: const Icon(
-                          Icons.chevron_left,
-                          color: Colors.white70,
-                        ),
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
+            // Progress Section
+            ValueListenableBuilder<int>(
+              valueListenable: _currentStepNotifier,
+              builder: (context, currentStep, child) {
+                return Column(
+                  children: [
+                    Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: horizontalPadding,
                       ),
-                      Text(
-                        '0${_currentStep + 1}/03',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
+                      child: Column(
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              IconButton(
+                                onPressed: _handleBack,
+                                icon: const Icon(
+                                  Icons.chevron_left,
+                                  color: Colors.white70,
+                                ),
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(),
+                                iconSize: iconSize,
+                              ),
+                              Text(
+                                '0${currentStep + 1}/03',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: progressTextSize,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              IconButton(
+                                onPressed: () {
+                                  if (currentStep < _questions.length - 1) {
+                                    _pageController.nextPage(
+                                      duration: const Duration(
+                                        milliseconds: 300,
+                                      ),
+                                      curve: Curves.easeInOut,
+                                    );
+                                  }
+                                },
+                                icon: const Icon(
+                                  Icons.chevron_right,
+                                  color: Colors.white70,
+                                ),
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(),
+                                iconSize: iconSize,
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 8 * scaleFactor),
+                          OnboardingProgressBar(
+                            currentStep: currentStep + 1,
+                            totalSteps: 3,
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: topBarSpacing),
+                    // Question Title
+                    Center(
+                      child: Text(
+                        _questions[currentStep]['questionTitle'],
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: questionTitleSize,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
-                      IconButton(
-                        onPressed: () {
-                          // Allow going forward via top arrow only if option selected?
-                          // Usually top arrows allow browsing, but bottom is for "Next".
-                          // Requirement: "the abouve arrow can change the question"
-                          // Design typically allows browsing back/forth.
-                          if (_currentStep < _questions.length - 1) {
-                            _pageController.nextPage(
-                              duration: const Duration(milliseconds: 300),
-                              curve: Curves.easeInOut,
-                            );
-                          }
-                        },
-                        icon: const Icon(
-                          Icons.chevron_right,
-                          color: Colors.white70,
-                        ),
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  OnboardingProgressBar(
-                    currentStep: _currentStep + 1,
-                    totalSteps: 3,
-                  ),
-                ],
-              ),
+                    ),
+                  ],
+                );
+              },
             ),
 
-            const SizedBox(height: 40),
+            SizedBox(height: 20 * scaleFactor),
 
-            // Question Title (Animated or Static? Usually static but content changes)
-            Center(
-              child: Text(
-                _questions[_currentStep]['questionTitle'],
-                style: const TextStyle(
-                  color: Colors.white70,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 20),
-
-            // PageView for Questions
+            // PageContent using Reusable Widget
             Expanded(
               child: PageView.builder(
                 controller: _pageController,
-                physics:
-                    const NeverScrollableScrollPhysics(), // Disable swipe as per "two arrow above user can go through"
+                physics: const NeverScrollableScrollPhysics(),
                 onPageChanged: _onPageChanged,
                 itemCount: _questions.length,
                 itemBuilder: (context, index) {
@@ -214,94 +252,15 @@ class _OnboardingPage1State extends State<OnboardingPage1> {
                   final options =
                       question['options'] as List<Map<String, dynamic>>;
 
-                  return Container(
-                    width: double.infinity,
-                    margin: const EdgeInsets.only(
-                      top: 10,
-                    ), // Optional visual spacing
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(30),
-                        topRight: Radius.circular(30),
-                      ),
-                    ),
-                    padding: const EdgeInsets.fromLTRB(30, 40, 30, 20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          question['title'],
-                          style: const TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black,
-                            height: 1.2,
-                          ),
-                        ),
-                        if (question['subtitle'] != null) ...[
-                          const SizedBox(height: 16),
-                          Text(
-                            question['subtitle'],
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.black87,
-                            ),
-                          ),
-                        ],
-                        const SizedBox(height: 30),
-
-                        // Options List
-                        Expanded(
-                          child: ListView.builder(
-                            itemCount: options.length,
-                            itemBuilder: (context, optionIndex) {
-                              final option = options[optionIndex];
-                              return Padding(
-                                padding: const EdgeInsets.only(bottom: 8.0),
-                                child: OnboardingOptionWidget(
-                                  label: option['label'],
-                                  emoji: option['emoji'],
-                                  description: option['description'],
-                                  isSelected:
-                                      _selectedOptions[index] == optionIndex,
-                                  onTap: () async {
-                                    if (_selectedOptions[index] != -1 &&
-                                        _selectedOptions[index] !=
-                                            optionIndex) {
-                                      // Shrink previous selection
-                                      setState(() {
-                                        _selectedOptions[index] = -1;
-                                      });
-                                      // Wait for shrink animation
-                                      await Future.delayed(
-                                        const Duration(milliseconds: 150),
-                                      );
-                                    }
-                                    // Grow new selection
-                                    if (mounted) {
-                                      setState(() {
-                                        _selectedOptions[index] = optionIndex;
-                                      });
-                                    }
-                                  },
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-
-                        // Next Button (Green Arrow)
-                        Align(
-                          alignment: Alignment.bottomRight,
-                          child: Padding(
-                            padding: const EdgeInsets.only(top: 10),
-                            child: ArrowButton(onTap: _handleNext, size: 70),
-                          ),
-                        ),
-                      ],
-                    ),
+                  return OnboardingContent(
+                    title: question['title'],
+                    subtitle: question['subtitle'],
+                    options: options,
+                    selectedOptionIndex: _selectedOptions[index],
+                    onOptionSelected: (optionIndex) =>
+                        _handleOptionSelect(index, optionIndex),
+                    onNext: _handleNext,
+                    scaleFactor: scaleFactor,
                   );
                 },
               ),

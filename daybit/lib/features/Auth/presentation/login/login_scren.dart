@@ -188,7 +188,7 @@ class _LoginScreenState extends State<LoginScreen>
                               onTap: () {
                                 // TODO: Handle login
                               },
-                              child: Container(
+                              child: Container( 
                                 width: double.infinity,
                                 padding: const EdgeInsets.symmetric(
                                   vertical: 18,
