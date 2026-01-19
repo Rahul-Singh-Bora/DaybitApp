@@ -48,6 +48,7 @@ flutter:
     - lib/features/Auth/assets/images/loginin/
     - lib/features/Auth/assets/vectors/
     - lib/features/Auth/assets/vectors/login/
+    - lib/features/Home/Assets/lottie/
     - lib/features/onboarding/assets/mp4/
 
   # An image asset can refer to one or more resolution-specific "variants", see

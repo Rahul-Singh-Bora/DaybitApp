@@ -193,7 +193,7 @@ class _SignupScreenState extends State<SignupScreen> {
                             Text('Please enter all fields'),
                           ],
                         ),
-                        backgroundColor: Colors.red.withOpacity(0.8),
+                        backgroundColor: const Color.fromRGBO(244, 67, 54, 0.8),
                         behavior: SnackBarBehavior.floating,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),

@@ -1,4 +1,4 @@
-import 'package:daybit/features/onboarding/presentation/pages/building_plan.dart';
+import 'package:daybit/features/Drawer/presentation/pages/main_scaffold.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -28,7 +28,7 @@ class DaybitApp extends StatelessWidget {
           ThemeData.dark().textTheme,
         ).apply(bodyColor: Colors.white, displayColor: Colors.white),
       ),
-      home: const BuildingPlanPage(),
+      home: const MainScaffold(),
     );
   }
 }
